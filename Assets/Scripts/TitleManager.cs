@@ -10,8 +10,8 @@ public class TitleManager : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		if (Input.GetButton("Submit")) {
-//			Application.LoadLevel("Woods");
-			Debug.Log ("This will load the level");
+			Application.LoadLevel("MichaelScene"); // Eventually load the woods
+			Debug.Log ("It is time to enter the woods...");
 		}
 	}
 }
