@@ -72,6 +72,11 @@ namespace UnityStandardAssets._2D
 					isClimbing = false;
 					m_Rigidbody2D.gravityScale = gravity;
 					//m_Anim.SetBool("Climbing", false);
+
+					if (jump)
+					{
+						m_Rigidbody2D.velocity = new Vector2 (moveX * m_MaxSpeed, 3 * m_MaxClimbSpeed);
+					}
 				}
 				else
 				{
