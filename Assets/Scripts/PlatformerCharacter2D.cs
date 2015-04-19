@@ -5,26 +5,27 @@ namespace UnityStandardAssets._2D
 {
     public class PlatformerCharacter2D : MonoBehaviour
     {
-        [SerializeField] private float m_MaxSpeed = 10f;                    // The fastest the player can travel in the x axis.
+		[SerializeField] private float m_MaxSpeed = 10f; // The fastest the player can travel in the x axis.
+		[SerializeField] private float m_MaxClimbSpeed = 3f;
         [SerializeField] private float m_JumpForce = 400f;                  // Amount of force added when the player jumps.
-        [Range(0, 1)] [SerializeField] private float m_CrouchSpeed = .36f;  // Amount of maxSpeed applied to crouching movement. 1 = 100%
         [SerializeField] private bool m_AirControl = false;                 // Whether or not a player can steer while jumping;
         [SerializeField] private LayerMask m_WhatIsGround;                  // A mask determining what is ground to the character
 
         private Transform m_GroundCheck;    // A position marking where to check if the player is grounded.
         const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
         private bool m_Grounded;            // Whether or not the player is grounded.
-        private Transform m_CeilingCheck;   // A position marking where to check for ceilings
         const float k_CeilingRadius = .01f; // Radius of the overlap circle to determine if the player can stand up
         private Animator m_Anim;            // Reference to the player's animator component.
         private Rigidbody2D m_Rigidbody2D;
         private bool m_FacingRight = true;  // For determining which way the player is currently facing.
+		const float gravity = 3f; // Constant for the amount of gravity acting on the player
+		private bool isClimbing = false; // State for climbing
+		private Transform tree;
 
         private void Awake()
         {
             // Setting up references.
             m_GroundCheck = transform.Find("GroundCheck");
-            m_CeilingCheck = transform.Find("CeilingCheck");
             m_Anim = GetComponent<Animator>();
             m_Rigidbody2D = GetComponent<Rigidbody2D>();
         }
@@ -40,7 +41,12 @@ namespace UnityStandardAssets._2D
             for (int i = 0; i < colliders.Length; i++)
             {
                 if (colliders[i].gameObject != gameObject)
+				{
                     m_Grounded = true;
+					isClimbing = false;
+					m_Rigidbody2D.gravityScale = gravity;
+					//m_Anim.SetBool("Climbing", false);
+				}
             }
             m_Anim.SetBool("Ground", m_Grounded);
 
@@ -49,46 +55,55 @@ namespace UnityStandardAssets._2D
         }
 
 
-        public void Move(float move, bool crouch, bool jump)
+        public void Move(float moveX, float moveY, bool jump, bool canClimb)
         {
-            // If crouching, check to see if the character can stand up
-            if (!crouch && m_Anim.GetBool("Crouch"))
-            {
-                // If the character has a ceiling preventing them from standing up, keep them crouching
-                if (Physics2D.OverlapCircle(m_CeilingCheck.position, k_CeilingRadius, m_WhatIsGround))
-                {
-                    crouch = true;
-                }
-            }
+			if (canClimb && Mathf.Abs (moveY) > Mathf.Abs (moveX))
+			{
+				isClimbing = true;
+				m_Rigidbody2D.gravityScale = 0;
+				m_Rigidbody2D.position = new Vector2 (tree.position.x, m_Rigidbody2D.position.y);
+				//m_Anim.SetBool("Climbing", true);
+			}
 
-            // Set whether or not the character is crouching in the animator
-            m_Anim.SetBool("Crouch", crouch);
+			if (isClimbing)
+			{
+				if (jump || !canClimb)
+				{
+					isClimbing = false;
+					m_Rigidbody2D.gravityScale = gravity;
+					//m_Anim.SetBool("Climbing", false);
+
+					if (jump)
+					{
+						m_Rigidbody2D.velocity = new Vector2 (moveX * m_MaxSpeed, 3 * m_MaxClimbSpeed);
+					}
+				}
+				else
+				{
+					m_Rigidbody2D.velocity = new Vector2 (0, moveY * m_MaxClimbSpeed);
+				}
+			}
 
             //only control the player if grounded or airControl is turned on
-            if (m_Grounded || m_AirControl)
-            {
-                // Reduce the speed if crouching by the crouchSpeed multiplier
-                move = (crouch ? move*m_CrouchSpeed : move);
+            if (m_Grounded || m_AirControl && !isClimbing) {
+				// The Speed animator parameter is set to the absolute value of the horizontal input.
+				m_Anim.SetFloat ("Speed", Mathf.Abs (moveX));
 
-                // The Speed animator parameter is set to the absolute value of the horizontal input.
-                m_Anim.SetFloat("Speed", Mathf.Abs(move));
+				// Move the character
+				m_Rigidbody2D.velocity = new Vector2 (moveX * m_MaxSpeed, m_Rigidbody2D.velocity.y);
 
-                // Move the character
-                m_Rigidbody2D.velocity = new Vector2(move*m_MaxSpeed, m_Rigidbody2D.velocity.y);
-
-                // If the input is moving the player right and the player is facing left...
-                if (move > 0 && !m_FacingRight)
-                {
-                    // ... flip the player.
-                    Flip();
-                }
+				// If the input is moving the player right and the player is facing left...
+				if (moveX > 0 && !m_FacingRight) {
+					// ... flip the player.
+					Flip ();
+				}
                     // Otherwise if the input is moving the player left and the player is facing right...
-                else if (move < 0 && m_FacingRight)
-                {
-                    // ... flip the player.
-                    Flip();
-                }
-            }
+                else if (moveX < 0 && m_FacingRight) {
+					// ... flip the player.
+					Flip ();
+				}
+			}
+
             // If the player should jump...
             if (m_Grounded && jump && m_Anim.GetBool("Ground"))
             {
@@ -110,5 +125,13 @@ namespace UnityStandardAssets._2D
             theScale.x *= -1;
             transform.localScale = theScale;
         }
+
+		public void SetTreePosition(Transform newTree)
+		{
+			// Set the tree that the player can climb up
+			// This is used in User Control
+			tree = newTree;
+			Debug.Log (tree.position);
+		}
     }
 }
