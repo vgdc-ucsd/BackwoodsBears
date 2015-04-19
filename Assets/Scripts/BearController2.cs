@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class BearController : MonoBehaviour {
+public class BearController2 : MonoBehaviour {
 
 	// This scripts assumes that when the bear is facing left,
 	// the x component of localScale is positive, and negative
