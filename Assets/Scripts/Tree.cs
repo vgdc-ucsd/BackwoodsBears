@@ -3,8 +3,9 @@ using System.Collections;
 
 public class Tree : MonoBehaviour
 {
-	private int hp = 3;
-	Transform m_transform;
+	public Transform root;
+	public int hp = 3;
+	private Transform m_transform;
 
 	// Use this for initialization
 	void Start ()
@@ -19,7 +20,18 @@ public class Tree : MonoBehaviour
 		
 	}
 
-	public void Chop()
+	public void Chop(Transform other)
+	{
+		hp--;
+
+		if (hp <= 0)
+		{
+			bool fallRight = other.position.x - transform.position.x < 0;
+			Fall (fallRight);
+		}
+	}
+
+	private void Fall(bool fallRight)
 	{
 
 	}
