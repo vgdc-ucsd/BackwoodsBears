@@ -7,8 +7,10 @@ namespace UnityStandardAssets._2D
     [RequireComponent(typeof (PlatformerCharacter2D))]
     public class Platformer2DUserControl : MonoBehaviour
     {
-        private PlatformerCharacter2D m_Character;
-        private bool m_Jump, canClimb;
+		private PlatformerCharacter2D m_Character;
+        private bool m_Jump, m_Chop, canClimb;
+		private float chopStart;
+		private bool chopping;
 
 
         private void Awake()
@@ -20,6 +22,18 @@ namespace UnityStandardAssets._2D
 
         private void Update()
         {
+			if (!m_Chop)
+			{
+				m_Chop = CrossPlatformInputManager.GetButtonDown("Fire1");
+
+				if (m_Chop)
+				{
+					chopping = true;
+					chopStart = Time.time;
+					m_Character.Chop ();
+				}
+			}
+
             if (!m_Jump)
             {
                 // Read the jump input in Update so button presses aren't missed.
@@ -29,11 +43,26 @@ namespace UnityStandardAssets._2D
 
         private void FixedUpdate()
         {
-            float moveX = CrossPlatformInputManager.GetAxis("Horizontal");
-			float moveY = CrossPlatformInputManager.GetAxis("Vertical");
+			if (chopping)
+			{
+				if (Time.time - chopStart > m_Character.m_ChopDuration)
+				{
+					m_Chop = false;
+					chopping = false;
+
+					if (!m_Character.IsClimbing())
+						canClimb = false;
+				}
+			}
+			else
+			{
+				float moveX = CrossPlatformInputManager.GetAxis ("Horizontal");
+				float moveY = CrossPlatformInputManager.GetAxis ("Vertical");
             
-			m_Character.Move(moveX, moveY, m_Jump, canClimb);
-            m_Jump = false;
+				m_Character.Move (moveX, moveY, m_Jump, canClimb);
+
+				m_Jump = false;
+			}
         }
 
 		public void OnTriggerEnter2D(Collider2D other)
@@ -55,11 +84,6 @@ namespace UnityStandardAssets._2D
 			{
 				canClimb = false;
 			}
-		}
-
-		public bool CanClimb()
-		{
-			return false;
 		}
     }
 }
