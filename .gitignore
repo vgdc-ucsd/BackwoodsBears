@@ -13,10 +13,6 @@
 *.userprefs
 *.pidb
 *.booproj
-*.fbx.meta
-*.blend.meta
-*.obj.meta
-*.mat.meta
 
 # Unity3D generated meta files
 *.pidb.meta
