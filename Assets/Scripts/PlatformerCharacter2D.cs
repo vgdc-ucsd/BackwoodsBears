@@ -10,7 +10,9 @@ namespace UnityStandardAssets._2D
         [SerializeField] private float m_JumpForce = 400f;                  // Amount of force added when the player jumps.
         [SerializeField] private bool m_AirControl = false;                 // Whether or not a player can steer while jumping;
         [SerializeField] private LayerMask m_WhatIsGround;                  // A mask determining what is ground to the character
+		[SerializeField] private Axe m_Axe;
 
+		public float m_ChopDuration = .5f;
         private Transform m_GroundCheck;    // A position marking where to check if the player is grounded.
         const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
         private bool m_Grounded;            // Whether or not the player is grounded.
@@ -22,7 +24,7 @@ namespace UnityStandardAssets._2D
 		private bool isClimbing = false; // State for climbing
 		private Transform tree;
 
-        private void Awake()
+		private void Awake()
         {
             // Setting up references.
             m_GroundCheck = transform.Find("GroundCheck");
@@ -114,6 +116,17 @@ namespace UnityStandardAssets._2D
             }
         }
 
+		public void Chop()
+		{
+			m_Anim.SetFloat ("Speed", 0);
+			m_Rigidbody2D.velocity = new Vector3 (0, m_Rigidbody2D.velocity.y, 0);
+
+			if (m_Axe.getTree() != null && m_Axe.getTree().isAlive() && !isClimbing)
+			{
+				m_Axe.getTree().Chop (transform);
+				m_Axe.ParticleBurst();
+			}
+		}
 
         private void Flip()
         {
@@ -131,7 +144,11 @@ namespace UnityStandardAssets._2D
 			// Set the tree that the player can climb up
 			// This is used in User Control
 			tree = newTree;
-			Debug.Log (tree.position);
+		}
+
+		public bool IsClimbing()
+		{
+			return isClimbing;
 		}
     }
 }
